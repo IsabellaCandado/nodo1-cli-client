@@ -1,0 +1,58 @@
+plugins {
+    id 'application'
+    id 'com.zeroc.slice-tools' version '3.8.+'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.zeroc:ice:3.8.+'
+}
+
+application {
+    mainClass = 'com.apexstore.client.CheckoutClientApp'
+}
+
+tasks.named('run') {
+    standardInput = System.in
+}
+
+// ---------------------------------------------------------------------------
+// Pruebas end-to-end (Cliente -> Server -> Pasarela).
+// Suite separada: requieren los 3 nodos corriendo, así que NO forman parte de
+// "gradlew build" ni de "gradlew check". Se ejecutan con: gradlew e2eTest
+// Código en: src/e2eTest/java
+// ---------------------------------------------------------------------------
+testing {
+    suites {
+        e2eTest(JvmTestSuite) {
+            useJUnitJupiter('5.11.4')
+
+            dependencies {
+                implementation project()                       // clases generadas desde el .ice
+                implementation 'com.zeroc:ice:3.8.+'
+                runtimeOnly 'org.postgresql:postgresql:42.7.2' // verificación opcional en la BD
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        outputs.upToDateWhen { false }         // siempre ejecutar
+                        testLogging {
+                            events 'passed', 'failed', 'skipped'
+                            showStandardStreams = true
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
